@@ -61,8 +61,13 @@
     const modelSelect = document.getElementById("model-select");
 
     const modelEndpoints = {
-      gemma: "http://127.0.0.1:8000/ai-chat",
-      deepseek: "http://127.0.0.1:8000/ai-chat-deepseek",
+      //Local
+      // gemma: "http://127.0.0.1:8000/ai-chat",
+      // deepseek: "http://127.0.0.1:8000/ai-chat-deepseek",
+
+      //Render
+      gemma:"https://llmbackend-bvln.onrender.com/ai-chat",
+      deepseek:"https://llmbackend-bvln.onrender.com/ai-chat-deepseek"
     };
 
     function appendMessage(sender, message) {
