@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat LLM</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: #cbd5e0;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-gray-100 to-gray-300 min-h-screen flex items-center justify-center font-sans">
+
+  <div class="w-full max-w-2xl h-[90vh] bg-white rounded-2xl shadow-xl flex flex-col p-6">
+    <h1 class="text-3xl font-bold text-center mb-6 text-blue-700">🤖 Chat con LLM</h1>
+
+    <div id="chat" class="flex-1 overflow-y-auto space-y-4 mb-4 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg scroll-smooth"></div>
+
+    <form id="chat-form" class="flex flex-col gap-2 mt-auto">
+      <div class="flex gap-2">
+        <select 
+          id="model-select" 
+          class="w-1/3 px-3 py-2 rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+          required
+        >
+          <option value="" disabled selected>Selecciona la AI</option>
+          <option value="gemma">Gemma</option>
+          <option value="deepseek">DeepSeek</option>
+        </select>
+
+        <input 
+          type="text" 
+          id="user-input" 
+          placeholder="Escribe algo..." 
+          class="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition" 
+          required
+        />
+        <button 
+          type="submit" 
+          class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold transition"
+        >
+          Enviar
+        </button>
+      </div>
+    </form>
+    <footer class="text-center text-sm text-gray-500 mt-4">
+      Creado por Andrés Camilo Paz
+    </footer>
+  </div>
+
+  <script>
+    const chatForm = document.getElementById("chat-form");
+    const userInput = document.getElementById("user-input");
+    const chatContainer = document.getElementById("chat");
+    const modelSelect = document.getElementById("model-select");
+
+    const modelEndpoints = {
+      gemma: "http://127.0.0.1:8000/ai-chat",
+      deepseek: "http://127.0.0.1:8000/ai-chat-deepseek",
+    };
+
+    function appendMessage(sender, message) {
+      const container = document.createElement("div");
+      container.className = sender === "user" 
+        ? "flex justify-end" 
+        : "flex justify-start";
+
+      const bubble = document.createElement("div");
+      bubble.className = `max-w-[80%] px-4 py-2 rounded-xl shadow text-sm ${
+        sender === "user"
+          ? "bg-blue-600 text-white animate-slide-up-right"
+          : "bg-gray-200 text-gray-800 animate-slide-up-left"
+      }`;
+
+      bubble.textContent = message;
+      container.appendChild(bubble);
+      chatContainer.appendChild(container);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    chatForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const message = userInput.value.trim();
+      const selectedModel = modelSelect.value;
+
+      if (!message || !selectedModel) return;
+
+      const endpoint = modelEndpoints[selectedModel];
+      if (!endpoint) {
+        appendMessage("bot", "⚠️ Modelo no reconocido.");
+        return;
+      }
+
+      appendMessage("user", message);
+      userInput.value = "";
+
+      const thinking = document.createElement("div");
+      thinking.className = "flex justify-start";
+      thinking.innerHTML = `<div class="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl shadow text-sm italic">⏳ Pensando...</div>`;
+      chatContainer.appendChild(thinking);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      try {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ message }),
+        });
+
+        const data = await res.json();
+        thinking.remove();
+        appendMessage("bot", data.response || "❌ No se recibió respuesta.");
+      } catch (error) {
+        console.error("Error:", error);
+        thinking.remove();
+        appendMessage("bot", "⚠️ Error de conexión con el servidor.");
+      }
+    });
+  </script>
+
+  <!-- Animaciones personalizadas -->
+  <style>
+    @keyframes slideUpLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideUpRight {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .animate-slide-up-left {
+      animation: slideUpLeft 0.3s ease-out;
+    }
+
+    .animate-slide-up-right {
+      animation: slideUpRight 0.3s ease-out;
+    }
+  </style>
+
+</body>
+</html>
